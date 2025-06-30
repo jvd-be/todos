@@ -1,0 +1,44 @@
+@import "tailwindcss";
+:root{
+   --color-primary: #10b981;        /* سبز نعنایی (شاداب و الهام‌بخش) */
+  --color-secondary: #fb7185;  /* صورتی مرجانی (شاد و زنده) */
+  --color-title: #040670;    
+  --color-accent: #fcd34d;         /* زرد ملایم (برای نوتیفیکیشن یا هایلایت) */
+
+  --color-background: #f9fafb;     /* زمینه روشن و ملایم */
+  --color-surface: #ffffff;        /* سطح‌های کارت و باکس‌ها */
+  --color-border: #e5e7eb;         /* خطوط و حاشیه‌ها */
+
+  --color-text: #111827;           /* متن اصلی */
+  --color-text-muted: #6b7280;     /* متن فرعی و توضیحی */
+
+  --color-complete: #1dd44b;       /* تسک‌های کامل‌شده */
+  --color-incomplete: #fc3434;     /* تسک‌های ناقص */
+ --color-progress: #fc892b;
+   --color-glass: #f2f1f39c;
+}
+
+@theme{
+   --color-primary: #10b981;        /* سبز نعنایی (شاداب و الهام‌بخش) */
+  --color-secondary: #fb7185;      /* صورتی مرجانی (شاد و زنده) */
+  --color-accent: #fcd34d;         /* زرد ملایم (برای نوتیفیکیشن یا هایلایت) */
+--color-title: #040670;
+
+  --color-background: #f9fafb;     /* زمینه روشن و ملایم */
+  --color-surface: #ffffff;        /* سطح‌های کارت و باکس‌ها */
+  --color-border: #e5e7eb;         /* خطوط و حاشیه‌ها */
+
+  --color-text: #111827;           /* متن اصلی */
+  --color-text-muted: #6b7280;     /* متن فرعی و توضیحی */
+
+  --color-complete: #1dd44b;       /* تسک‌های کامل‌شده */
+  --color-incomplete: #fc3434;     /* تسک‌های ناقص */
+  --color-progress:#fc892b;
+
+  --color-glass: #f2f1f39c;  
+}
+.todo-input:focus ~ .tick-icon {
+  transform: scale(1.1); /* 10 درصد بزرگ‌تر */
+  transition: transform 0.2s ease-in-out; /* انیمیشن نرم */
+  background-color: #1dd44b !important;
+}
