@@ -50,15 +50,8 @@ export default function Sidebar ({ isOpen, onClose, data }) {
         </p>
       </div>
 
-      <button
-          onClick={handleLogout}
-          className='text-red-500 hover:text-red-700 text-md tracking-wide cursor-pointer transition-colors'
-        >
-          LogOut
-        </button>
-
-      <nav className='flex flex-col px-4 py-4 space-y-2'>
-        {['Dashboard', 'Profile', 'Settings'].map(item => (
+      <nav className="flex flex-col px-4 py-4 space-y-2">
+        {['Dashboard', 'Profile', 'Settings'].map((item) => (
           <span
             key={item}
             className='text-gray-700 hover:text-blue-500 text-md tracking-wide cursor-pointer transition-colors'
@@ -66,8 +59,12 @@ export default function Sidebar ({ isOpen, onClose, data }) {
             {item}
           </span>
         ))}
-
-        
+        <span
+          onClick={handleLogout}
+          className="text-gray-700 hover:text-blue-500 text-md tracking-wide cursor-pointer transition-colors"
+        >
+          LogOut
+        </span>
       </nav>
     </div>
   )
