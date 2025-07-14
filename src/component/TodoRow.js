@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { IoMdDoneAll } from 'react-icons/io'
 import { MdDelete } from 'react-icons/md'
 import { FiEdit3 } from 'react-icons/fi'
+import { supabase } from '../../lib/supabaseClient'
 export default function TodoRow ({
   onSelect,
   title,
@@ -9,29 +10,42 @@ export default function TodoRow ({
   condition,
   id,
   onShowDeleteModal,
-  onShowCart
+  onShowCart,
+  onUpdateStatus,
 }) {
   const [status, setStatus] = useState(condition)
   const [loading, setLoading] = useState(false)
 
-  const handeleChange = async e => {
-    const newState = e.target.value
-    setStatus(newState)
+   const handeleChange = async (e) => {
+    const newState = e.target.value;
+    setStatus(newState);
+    setLoading(true);
 
     try {
-      const res = await fetch(`/api/todos/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status: newState })
-      })
+      const { error } = await supabase
+        .from('todos')
+        .update({ status: newState })
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error updating todo:', error.message);
+        alert('خطا در به‌روزرسانی وضعیت');
+        setStatus(condition); // بازگشت به وضعیت قبلی در صورت خطا
+        return;
+      }
+
+      // به‌روزرسانی استیت والد
+      onUpdateStatus(id, newState);
+      alert('وضعیت با موفقیت به‌روزرسانی شد');
     } catch (error) {
-      console.log('error:', error)
+      console.error('Unexpected error:', error);
+      alert('خطای غیرمنتظره در به‌روزرسانی');
+      setStatus(condition); // بازگشت به وضعیت قبلی در صورت خطا
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
 
   const handleDeleted = () => {
     onShowDeleteModal()
@@ -71,22 +85,32 @@ export default function TodoRow ({
   }, [loading])
 
   const setDoneHandeler = async () => {
-    setStatus('Done')
+    setStatus('Done');
+    setLoading(true);
 
     try {
-      const res = await fetch(`/api/todos/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status: 'Done' })
-      })
+      const { error } = await supabase
+        .from('todos')
+        .update({ status: 'Done' })
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error updating todo:', error.message);
+        alert('خطا در به‌روزرسانی وضعیت به Done');
+        setStatus(condition);
+        return;
+      }
+
+      onUpdateStatus(id, 'Done');
+      alert('تودو با موفقیت به Done تغییر کرد');
     } catch (error) {
-      console.log('error:', error)
+      console.error('Unexpected error:', error);
+      alert('خطای غیرمنتظره در به‌روزرسانی');
+      setStatus(condition);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
   return (
     <div className='flex items-center justify-between gap-x-1 sm:gap-x-3 m-1 my-2 sm:m-3 text-text'>
       <span className=' hidden md:block text-center bg-blue-500 text-white px-2 md:px-5  py-1 rounded shadow-md hover:scale-110 hover:shadow-lg transition-transform duration-200 ease-in-out'>

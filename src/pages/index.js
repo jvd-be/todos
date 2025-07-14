@@ -4,14 +4,24 @@ import { TiTickOutline } from 'react-icons/ti'
 import { AiOutlineAlignLeft } from 'react-icons/ai'
 import TodoRow from '@/component/TodoRow'
 import DeleteModal from '@/component/DeleteModal'
-import VerifyUserToken from '../../lib/VerifyUserToken'
 import Sidebar from '@/component/Sidbar'
+import { supabase } from '../../lib/supabaseClient'
+import { createPagesServerClient } from '@supabase/auth-helpers-nextjs'
 
-export async function getServerSideProps (context) {
-  const user = VerifyUserToken(context.req)
+// pages/dashboard/index.js یا هر صفحه protected
 
 
-  if (!user) {
+export const getServerSideProps = async ctx => {
+  const supabase = createPagesServerClient(ctx)
+
+  console.log('supabse:',supabase);
+  
+  const {
+    data: { session }
+  } = await supabase.auth.getSession()
+  console.log("session",session);
+  
+  if (!session) {
     return {
       redirect: {
         destination: '/login',
@@ -19,22 +29,23 @@ export async function getServerSideProps (context) {
       }
     }
   }
+
   return {
-    props: user
+    props: {
+      user: session.user
+    }
   }
 }
 
-export default function index (user) {
-  console.log(user.id);
-  
+export default function index ({ user }) {
+  console.log(user)
+
   const [showCart, setShowCart] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectTodo, setSelectTodo] = useState(null)
   const [todoValue, setTodoValue] = useState('')
   const [data, setData] = useState([])
   const [inShowSidebar, setInShowSidebar] = useState(false)
-  
-  
 
   const handeleShowDeletedModal = () => {
     setShowDeleteModal(!showDeleteModal)
@@ -46,76 +57,112 @@ export default function index (user) {
     setSelectTodo(todo)
   }
 
+  
+
+const deleteHandler = async (itemId) => {
+   console.log("🧪 itemId for deletion:", itemId);
+  const { error } = await supabase
+    .from('todos')
+    .delete()
+    .eq('id', itemId); // اگر ستون کلید اصلی اسم دیگه‌ای داره تغییر بده
+
+  if (error) {
+    console.error('Error deleting todo:', error.message);
+    alert('خطا در حذف آیتم');
+    return;
+  }
+
+  // حذف آیتم از state
+  setData((prev) => prev.filter((todo) => todo.id !== itemId));
+  alert('Todo با موفقیت حذف شد');
+};
+
+
+  useEffect(() => {
+    const getTodoHandler = async () => {
+      try {
+        // دریافت داده‌ها از جدول todos در Supabase
+        const { data: todos, error } = await supabase
+          .from('todos') // نام جدول شما در Supabase
+          .select('*'); // انتخاب همه ستون‌ها (می‌توانید ستون‌های خاص را مشخص کنید)
+
+        if (error) {
+          console.error('Error fetching todos:', error);
+          return;
+        }
+
+        setData(todos);
+      } catch (error) {
+        console.error('Unexpected error:', error);
+      }
+    };
+
+    getTodoHandler();
+  }, []);
+
+ const addTodoHandeler = async () => {
+  if (!todoValue.trim()) {
+    alert("Please enter a todo title");
+    return;
+  }
+
   const todoObj = {
     title: todoValue,
     status: 'Not-Done',
     description: '',
-    user:user.id
-  }
-  const deleteHandler = async itemId => {
-    try {
-      const res = await fetch(`/api/todos/${itemId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-      if (res.ok) {
-        setData(prev => prev.filter(todo => todo._id !== itemId))
-        alert('Todo deleted successfully')
-      }
-    } catch (error) {
-      console.log('error:', error)
-    }
+    userId: user.id,  // فرض می‌کنیم user از props یا state داری
   }
 
-  useEffect(() => {
-    const getTodoHandeler = async () => {
-      const res = await fetch(`/api/todos/`)
+  const { data, error } = await supabase
+    .from('todos')
+    .insert([todoObj])
+    .select() // برای اینکه داده برگرده
+    .single() // چون فقط یک ردیف درج می‌کنیم
 
-      if (res.ok) {
-        const data = await res.json()
-        setData(data.todos)
-      }
-    }
-
-    getTodoHandeler()
-  }, [])
-
-  const addTodoHandeler = async () => {
-    const res = await fetch('/api/todos/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(todoObj)
-    })
-    if (res.ok) {
-      const newTodo = await res.json()
-
-      setData(prev => [...prev, { ...todoObj, _id: newTodo._id }])
-
-      setTodoValue('')
-    }
+  if (error) {
+    console.error("Error inserting todo:", error);
+    alert("خطا در افزودن TODO");
+    return;
   }
 
-  const handleUpdateTodo = updatedTodo => {
-    setData(prev =>
-      prev.map(todo =>
-        todo._id === updatedTodo._id
-          ? {
-              ...todo,
-              title: updatedTodo.title,
-              description: updatedTodo.description
-            }
-          : todo
+  // اضافه کردن به state
+  setData(prev => [...prev, data]);
+  setTodoValue('');
+}
+
+const handleUpdateStatus = (id, newStatus) => {
+    setData((prev) =>
+      prev.map((todo) =>
+        todo.id === id ? { ...todo, status: newStatus } : todo
       )
-    )
+    );
+  };
+  
+  const handleUpdateTodo = async (updatedTodo) => {
+  const { id, title, description } = updatedTodo;
+
+  const { data, error } = await supabase
+    .from('todos')
+    .update({ title, description })
+    .eq('id', id)
+    .select(); // optional: اگر بخوای رکورد آپدیت شده رو بگیری
+
+  if (error) {
+    console.error('Error updating todo:', error.message);
+    return;
   }
 
-  const closeSidebar=()=>{
+  // اگه بخوای UI رو آپدیت کنی:
+  setData(prev =>
+    prev.map(todo =>
+      todo.id === id
+        ? { ...todo, title, description }
+        : todo
+    )
+  );
+};
+  const closeSidebar = () => {
     setInShowSidebar(false)
-    
   }
   return (
     <div className='relative min-h-screen bg-gradient-to-bl from-emerald-400 to-blue-500 text-center  text-white '>
@@ -124,18 +171,17 @@ export default function index (user) {
           JUST DO IT
         </h1>
       </div>
-      <div className="flex justify-end">
-  <button
-    onClick={() => setInShowSidebar(!inShowSidebar)}
-    className="p-2 m-4 cur rounded-md bg-white text-gray-700 shadow-md hover:shadow-lg hover:text-white hover:bg-blue-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400 active:scale-95"
-  >
-    <AiOutlineAlignLeft className="w-6 h-6 transition-transform duration-300 hover:rotate-180" />
-  </button>
-</div>
-  
+      <div className='flex justify-end'>
+        <button
+          onClick={() => setInShowSidebar(!inShowSidebar)}
+          className='p-2 m-4 cur rounded-md bg-white text-gray-700 shadow-md hover:shadow-lg hover:text-white hover:bg-blue-600 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-400 active:scale-95'
+        >
+          <AiOutlineAlignLeft className='w-6 h-6 transition-transform duration-300 hover:rotate-180' />
+        </button>
+      </div>
 
       <Sidebar isOpen={inShowSidebar} onClose={closeSidebar} data={user} />
-      
+
       <div className='bg-white/30 backdrop-blur-md border-2 border-gray-300 dark:border-gray-600 rounded-lg shadow-md mx-auto w-10/12 md:w-8/12 max-h-[520px] h-7/12 overflow-y-auto p-1 sm:p-2 md:p-4 space-y-4 transition-all duration-300'>
         {/* inputbar */}
 
@@ -158,14 +204,15 @@ export default function index (user) {
         <>
           {data.map((todo, index) => (
             <TodoRow
-              key={todo._id}
+              key={todo.id}
               title={todo.title}
               num={index}
               condition={todo.status}
-              id={todo._id}
+              id={todo.id}
               onSelect={() => handleSelect(todo)}
               onShowDeleteModal={handeleShowDeletedModal}
               onShowCart={handeleShowCart}
+                   onUpdateStatus={handleUpdateStatus}
             />
           ))}
         </>
@@ -181,7 +228,7 @@ export default function index (user) {
         <DeleteModal
           data={selectTodo}
           onShowDeleteModal={handeleShowDeletedModal}
-          onDeleted={() => deleteHandler(selectTodo._id)}
+          onDeleted={() => deleteHandler(selectTodo.id)}
         />
       )}
     </div>

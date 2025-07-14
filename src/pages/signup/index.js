@@ -1,7 +1,8 @@
 import React from 'react'
 import { useForm } from 'react-hook-form'
-import Validations from '../Validations/RulesForm'
+import Validations from '@/Validations/RulesForm'
 import { useRouter } from 'next/router'
+import { supabase } from '../../../lib/supabaseClient'
 import Link from 'next/link'
 
 export default function index () {
@@ -13,22 +14,32 @@ export default function index () {
     reset
   } = useForm()
 
-  const onSubmit = async data => {
-    try {
-      const res = await fetch('/api/todos/signup/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      })
+const onSubmit = async (formData) => {
+  const { firstName, lastName, userName, email, password } = formData;
 
-      if (res.ok) {
-        reset()
-        router.push('/')
-      }
-    } catch (error) {
-      console.log('error:', error)
-    }
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: {
+        firstName,
+        lastName,
+        userName,
+      },
+    },
+  });
+
+  if (error) {
+    console.error('Signup error:', error.message);
+    alert('خطا در ثبت نام: ' + error.message);
+    return;
   }
+
+  // موفقیت
+  alert('ثبت نام با موفقیت انجام شد! لطفاً ایمیل خود را تأیید کنید.');
+  reset();
+  router.push('/');
+};
 
   return (
     <div className='flex flex-col justify-center items-center min-h-screen bg-gray-100 '>
@@ -82,7 +93,7 @@ export default function index () {
           <label className='text-md text-gray-600 mb-1'>email</label>
           <input
             {...register('email', Validations.email)}
-            type='text'
+            type='email'
             placeholder='email'
             className='p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50 text-md'
           />
@@ -96,7 +107,7 @@ export default function index () {
           <label className='text-md text-gray-600 mb-1'>password</label>
           <input
             {...register('password', Validations.password)}
-            type='text'
+            type='password'
             placeholder='password'
             className='p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-gray-50 text-md'
           />
