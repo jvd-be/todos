@@ -1,18 +1,26 @@
-import React from 'react'
-import { IoCloseSharp } from "react-icons/io5";
+import React from 'react';
+import { IoCloseSharp } from 'react-icons/io5';
 import { useRouter } from 'next/router';
+import { supabase } from '../../lib/supabaseClient';
 
 export default function Sidebar({ isOpen, onClose, data }) {
   const router = useRouter();
 
   const handleLogout = async () => {
     try {
-      const res = await fetch('/api/todos/logout/', { method: 'POST' });
-      if (res.ok) {
-        router.push("/login");
+      const { error } = await supabase.auth.signOut();
+
+      if (error) {
+        console.error('Logout failed:', error.message);
+        alert('خطا در خروج از حساب');
+        return;
       }
+
+      // هدایت به صفحه لاگین پس از خروج موفقیت‌آمیز
+      router.push('/login');
     } catch (error) {
-      console.error('Logout failed', error);
+      console.error('Unexpected error during logout:', error);
+      alert('خطای غیرمنتظره در خروج');
     }
   };
 
