@@ -7,20 +7,20 @@ import DeleteModal from '@/component/DeleteModal'
 import Sidebar from '@/component/Sidbar'
 import { supabase } from '../../lib/supabaseClient'
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs'
+import TaskChart from '@/component/chart'
 
 // pages/dashboard/index.js یا هر صفحه protected
-
 
 export const getServerSideProps = async ctx => {
   const supabase = createPagesServerClient(ctx)
 
-  console.log('supabse:',supabase);
-  
+  console.log('supabse:', supabase)
+
   const {
     data: { session }
   } = await supabase.auth.getSession()
-  console.log("session",session);
-  
+  console.log('session', session)
+
   if (!session) {
     return {
       redirect: {
@@ -38,14 +38,15 @@ export const getServerSideProps = async ctx => {
 }
 
 export default function index ({ user }) {
-  console.log(user)
-
   const [showCart, setShowCart] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [selectTodo, setSelectTodo] = useState(null)
   const [todoValue, setTodoValue] = useState('')
   const [data, setData] = useState([])
   const [inShowSidebar, setInShowSidebar] = useState(false)
+  const [done, setDone] = useState(0)
+  const [notDone, setNotDone] = useState(0)
+  const [inProgress, setInProgress] = useState(0)
 
   const handeleShowDeletedModal = () => {
     setShowDeleteModal(!showDeleteModal)
@@ -57,26 +58,20 @@ export default function index ({ user }) {
     setSelectTodo(todo)
   }
 
-  
+  const deleteHandler = async itemId => {
+    console.log('🧪 itemId for deletion:', itemId)
+    const { error } = await supabase.from('todos').delete().eq('id', itemId) // اگر ستون کلید اصلی اسم دیگه‌ای داره تغییر بده
 
-const deleteHandler = async (itemId) => {
-   console.log("🧪 itemId for deletion:", itemId);
-  const { error } = await supabase
-    .from('todos')
-    .delete()
-    .eq('id', itemId); // اگر ستون کلید اصلی اسم دیگه‌ای داره تغییر بده
+    if (error) {
+      console.error('Error deleting todo:', error.message)
+      alert('خطا در حذف آیتم')
+      return
+    }
 
-  if (error) {
-    console.error('Error deleting todo:', error.message);
-    alert('خطا در حذف آیتم');
-    return;
+    // حذف آیتم از state
+    setData(prev => prev.filter(todo => todo.id !== itemId))
+    alert('Todo با موفقیت حذف شد')
   }
-
-  // حذف آیتم از state
-  setData((prev) => prev.filter((todo) => todo.id !== itemId));
-  alert('Todo با موفقیت حذف شد');
-};
-
 
   useEffect(() => {
     const getTodoHandler = async () => {
@@ -84,83 +79,92 @@ const deleteHandler = async (itemId) => {
         // دریافت داده‌ها از جدول todos در Supabase
         const { data: todos, error } = await supabase
           .from('todos') // نام جدول شما در Supabase
-          .select('*'); // انتخاب همه ستون‌ها (می‌توانید ستون‌های خاص را مشخص کنید)
+          .select('*') // انتخاب همه ستون‌ها (می‌توانید ستون‌های خاص را مشخص کنید)
 
         if (error) {
-          console.error('Error fetching todos:', error);
-          return;
+          console.error('Error fetching todos:', error)
+          return
         }
-
-        setData(todos);
+        console.log(todos)
+        setData(todos)
       } catch (error) {
-        console.error('Unexpected error:', error);
+        console.error('Unexpected error:', error)
       }
-    };
+    }
 
-    getTodoHandler();
-  }, []);
+    getTodoHandler()
+  }, [])
 
- const addTodoHandeler = async () => {
-  if (!todoValue.trim()) {
-    alert("Please enter a todo title");
-    return;
+  //chartTask
+
+  useEffect(() => {
+    const Done = data.filter(item => item.status === 'Done').length + 1
+    const NotDone = data.filter(item => item.status === 'Not-Done').length + 1
+    const InProgress =
+      data.filter(item => item.status === 'InProgress').length + 1
+
+    setDone(Done)
+    setNotDone(NotDone)
+    setInProgress(InProgress)
+  }, [data])
+
+  const addTodoHandeler = async () => {
+    if (!todoValue.trim()) {
+      alert('Please enter a todo title')
+      return
+    }
+
+    const todoObj = {
+      title: todoValue,
+      status: 'Not-Done',
+      description: '',
+      userId: user.id // فرض می‌کنیم user از props یا state داری
+    }
+
+    const { data, error } = await supabase
+      .from('todos')
+      .insert([todoObj])
+      .select() // برای اینکه داده برگرده
+      .single() // چون فقط یک ردیف درج می‌کنیم
+
+    if (error) {
+      console.error('Error inserting todo:', error)
+      alert('خطا در افزودن TODO')
+      return
+    }
+
+    // اضافه کردن به state
+    setData(prev => [...prev, data])
+    setTodoValue('')
   }
 
-  const todoObj = {
-    title: todoValue,
-    status: 'Not-Done',
-    description: '',
-    userId: user.id,  // فرض می‌کنیم user از props یا state داری
-  }
-
-  const { data, error } = await supabase
-    .from('todos')
-    .insert([todoObj])
-    .select() // برای اینکه داده برگرده
-    .single() // چون فقط یک ردیف درج می‌کنیم
-
-  if (error) {
-    console.error("Error inserting todo:", error);
-    alert("خطا در افزودن TODO");
-    return;
-  }
-
-  // اضافه کردن به state
-  setData(prev => [...prev, data]);
-  setTodoValue('');
-}
-
-const handleUpdateStatus = (id, newStatus) => {
-    setData((prev) =>
-      prev.map((todo) =>
-        todo.id === id ? { ...todo, status: newStatus } : todo
-      )
-    );
-  };
-  
-  const handleUpdateTodo = async (updatedTodo) => {
-  const { id, title, description } = updatedTodo;
-
-  const { data, error } = await supabase
-    .from('todos')
-    .update({ title, description })
-    .eq('id', id)
-    .select(); // optional: اگر بخوای رکورد آپدیت شده رو بگیری
-
-  if (error) {
-    console.error('Error updating todo:', error.message);
-    return;
-  }
-
-  // اگه بخوای UI رو آپدیت کنی:
-  setData(prev =>
-    prev.map(todo =>
-      todo.id === id
-        ? { ...todo, title, description }
-        : todo
+  const handleUpdateStatus = (id, newStatus) => {
+    setData(prev =>
+      prev.map(todo => (todo.id === id ? { ...todo, status: newStatus } : todo))
     )
-  );
-};
+  }
+
+  const handleUpdateTodo = async updatedTodo => {
+    const { id, title, description } = updatedTodo
+
+    const { data, error } = await supabase
+      .from('todos')
+      .update({ title, description })
+      .eq('id', id)
+      .select() // optional: اگر بخوای رکورد آپدیت شده رو بگیری
+
+    if (error) {
+      console.error('Error updating todo:', error.message)
+      return
+    }
+
+    // اگه بخوای UI رو آپدیت کنی:
+    setData(prev =>
+      prev.map(todo =>
+        todo.id === id ? { ...todo, title, description } : todo
+      )
+    )
+  }
   const closeSidebar = () => {
     setInShowSidebar(false)
   }
@@ -212,7 +216,7 @@ const handleUpdateStatus = (id, newStatus) => {
               onSelect={() => handleSelect(todo)}
               onShowDeleteModal={handeleShowDeletedModal}
               onShowCart={handeleShowCart}
-                   onUpdateStatus={handleUpdateStatus}
+              onUpdateStatus={handleUpdateStatus}
             />
           ))}
         </>
@@ -231,6 +235,13 @@ const handleUpdateStatus = (id, newStatus) => {
           onDeleted={() => deleteHandler(selectTodo.id)}
         />
       )}
+      {
+        data.length&&
+      <div style={{ padding: '4rem' }}>
+        <h1>نمودار تسک‌ها</h1>
+        <TaskChart Done={done} NotDone={notDone} InProgress={inProgress} />
+      </div>
+      }
     </div>
   )
 }
