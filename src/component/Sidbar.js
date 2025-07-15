@@ -46,12 +46,12 @@ export default function Sidebar({ isOpen, onClose, data }) {
             {item}
           </span>
         ))}
-        <span
+        <button
           onClick={handleLogout}
           className="text-gray-700 hover:text-blue-500 text-md tracking-wide cursor-pointer transition-colors"
         >
           LogOut
-        </span>
+        </button>
       </nav>
     </div>
   );
