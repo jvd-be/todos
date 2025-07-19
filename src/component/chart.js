@@ -9,15 +9,15 @@ import {
 
 ChartJS.register(ArcElement, Tooltip, Legend)
 
-export default function TaskChart({ Done, InProgress, NotDone }) {
+export default function TaskChart({ NotDone, InProgress, Done }) {
   const data = {
     labels: ['NotDone', 'InProgress', 'Done'],
     datasets: [
       {
-        data: [ Done, InProgress, NotDone],
-        backgroundColor: ['#10B981	', '#F59E0B', '#EF4444'],
+       data: [NotDone, InProgress, Done],
+       backgroundColor: ['#EF4444', '#F59E0B', '#10B981'],
         borderWidth: 2,
-        hoverOffset:12,
+        hoverOffset:16,
       },
     ],
   }

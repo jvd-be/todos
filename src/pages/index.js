@@ -98,11 +98,10 @@ export default function index ({ user }) {
   //chartTask
 
   useEffect(() => {
-    const Done = data.filter(item => item.status === 'Done').length + 1
-    const NotDone = data.filter(item => item.status === 'Not-Done').length + 1
-    const InProgress =
-      data.filter(item => item.status === 'InProgress').length + 1
-
+    const Done = data.filter(item => item.status === 'Done').length 
+    const NotDone = data.filter(item => item.status === 'Not-Done').length 
+    const InProgress =data.filter(item => item.status === 'In-Progress').length 
+console.log(InProgress );
     setDone(Done)
     setNotDone(NotDone)
     setInProgress(InProgress)
@@ -235,16 +234,14 @@ export default function index ({ user }) {
           onDeleted={() => deleteHandler(selectTodo.id)}
         />
       )}
-      {
-        data.length&&
-  <div className="p-4 sm:p-8 md:p-16 lg:p-24">
-  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-gray-800 mb-6">
-    Chart Todos
-  </h1>
-  <TaskChart Done={done} NotDone={notDone} InProgress={inProgress} />
-</div>
-
-      }
+      {data.length && (
+        <div className='p-4 sm:p-8 md:p-16 lg:p-24'>
+          <h1 className='text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-gray-800 mb-6'>
+            Chart Todos
+          </h1>
+          <TaskChart Done={done} NotDone={notDone} InProgress={inProgress} />
+        </div>
+      )}
     </div>
   )
 }
