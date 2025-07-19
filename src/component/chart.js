@@ -11,7 +11,7 @@ ChartJS.register(ArcElement, Tooltip, Legend)
 
 export default function TaskChart({ Done, InProgress, NotDone }) {
   const data = {
-    labels: ['انجام شده', 'در حال انجام', 'انجام نشده'],
+    labels: ['NotDone', 'InProgress', 'Done'],
     datasets: [
       {
         data: [ Done, InProgress, NotDone],
@@ -37,8 +37,9 @@ export default function TaskChart({ Done, InProgress, NotDone }) {
 }
 
   return (
-    <div style={{ width: '450px', margin: 'auto',height:"450px",animation:"revert-layer"}}>
-      <Doughnut data={data} options={options} />
-    </div>
+    <div className="w-full max-w-xs mx-auto h-[350px] animate-none sm:h-[300px] md:h-[350px] lg:h-[400px]">
+  <Doughnut data={data} options={options} />
+</div>
+
   )
 }

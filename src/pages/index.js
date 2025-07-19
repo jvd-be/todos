@@ -237,10 +237,13 @@ export default function index ({ user }) {
       )}
       {
         data.length&&
-      <div style={{ padding: '4rem' }}>
-        <h1>نمودار تسک‌ها</h1>
-        <TaskChart Done={done} NotDone={notDone} InProgress={inProgress} />
-      </div>
+  <div className="p-4 sm:p-8 md:p-16 lg:p-24">
+  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-center text-gray-800 mb-6">
+    Chart Todos
+  </h1>
+  <TaskChart Done={done} NotDone={notDone} InProgress={inProgress} />
+</div>
+
       }
     </div>
   )
